@@ -8,6 +8,7 @@
     import defaultsDeep from 'lodash.defaultsdeep'
     import Quill from 'quill'
     import GrammarlyInline from './formats/GrammarlyInline'
+    import { ImageUpload } from 'quill-image-upload'
 
     export default {
         model: {
@@ -83,6 +84,7 @@
             }
 
             Quill.register(GrammarlyInline)
+            Quill.register('modules/imageUpload', ImageUpload);
 
             this.editor = new Quill(this.$refs.quill, defaultsDeep(this.config, this.defaultConfig))
 
