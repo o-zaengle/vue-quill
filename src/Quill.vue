@@ -33,7 +33,7 @@
             },
 
             output: {
-                default : 'delta'
+                default : 'html'
             },
 
             bus: {
@@ -45,6 +45,7 @@
                     return {}
                 },
             },
+
         },
 
         data() {
@@ -58,6 +59,7 @@
                                { 'list': 'ordered' }, { 'list': 'bullet' }
                             ],
                             [{ 'align': [] }],
+                            ['image'],
                         ],
                     },
                     theme: 'snow',
