@@ -17,7 +17,7 @@
 
         props: {
             content: {},
-
+            loadContent: false,
             formats: {
                 type: Array,
                 default() {
@@ -92,7 +92,7 @@
 
             if (this.content && this.content !== '') {
 	            if (this.output != 'delta') {
-	                this.editor.dangerouslyPasteHTML(this.content)
+	                this.editor.clipboard.dangerouslyPasteHTML(this.content)
 	            } else {
 	                this.editor.setContents(this.content)
 	            }
@@ -154,5 +154,16 @@
                 this.bus.$off('set-html')
             }
         },
+        watch: {
+            loadContent(){
+              if (this.content && this.content !== '' && this.loadContent) {
+                if (this.output != 'delta') {
+                    this.editor.clipboard.dangerouslyPasteHTML(this.content)
+                } else {
+                    this.editor.setContents(this.content)
+                }
+              }
+            }
+        }
     }
 </script>
