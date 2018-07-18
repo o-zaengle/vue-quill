@@ -36,10 +36,6 @@
                 default : 'html'
             },
 
-            bus: {
-                default: false,
-            },
-
             config: {
                 default() {
                     return {}
@@ -67,6 +63,14 @@
             }
         },
 
+        watch: {
+            loadContent() {
+                if(this.loadContent) {
+                    this.setContent()
+                }
+            }
+        },
+
         mounted() {
             if (this.keyBindings.length) {
                 this.defaultConfig.modules.keyboard = {
@@ -90,80 +94,32 @@
 
             this.editor = new Quill(this.$refs.quill, defaultsDeep(this.config, this.defaultConfig))
 
-            if (this.content && this.content !== '') {
-	            if (this.output != 'delta') {
-	                this.editor.clipboard.dangerouslyPasteHTML(this.content)
-	            } else {
-	                this.editor.setContents(this.content)
-	            }
-            }
-
             this.editor.on('text-change', (delta, source) => {
                 this.$emit('text-change', this.editor, delta, source)
                 this.$emit('input', this.output != 'delta' ? this.editor.root.innerHTML : this.editor.getContents())
             })
 
-            this.editor.on('selection-change', (range) => {
-                this.$emit('selection-change', this.editor, range)
-            })
-
-            if (this.bus) {
-                this.bus.$on('focus-editor', () => this.focusEditor())
-                this.bus.$on('set-content', (content) => this.editor.setContents(content))
-                this.bus.$on('set-html', (html) => {
-                    if (!html || html === '') return
-
-                    this.editor.root.innerHTML = html
-                })
-            }
-
-            this.$on('focus-editor', () => this.focusEditor())
-            this.$on('set-content', (content) => this.editor.setContents(content))
-            this.$on('set-html', (html) => {
-                if (!html || html === '') return
-
-                this.editor.root.innerHTML = html
+            this.editor.on('selection-change', (range, oldRange, source) => {
+                this.$emit('selection-change', this.editor, {range, oldRange, source})
             })
         },
 
         methods: {
+            setContent() {
+                if(this.content.length) {
+                    if (this.output === 'delta') {
+                        this.editor.setContents(this.content)
+                    } else {
+                        this.editor.clipboard.dangerouslyPasteHTML(this.content)
+                    }
+                }
+            },
             focusEditor(e) {
-                if (e && e.srcElement) {
-                    let classList = e.srcElement.classList,
-                        isSegment = false
-
-                    classList.forEach((className) => {
-                        if (className === 'segment') {
-                            isSegment = true
-                            return
-                        }
-                    })
-
-                    if (!isSegment) return
+                if (!this.editor.hasFocus()) {
+                    this.editor.focus()
+                    this.editor.setSelection(this.editor.getLength()-1, this.editor.getLength())
                 }
-
-                this.editor.focus()
-                this.editor.setSelection(this.editor.getLength()-1, this.editor.getLength())
             }
         },
-
-        beforeDestroy() {
-            if (this.bus) {
-                this.bus.$off('focus-editor')
-                this.bus.$off('set-content')
-                this.bus.$off('set-html')
-            }
-        },
-        watch: {
-            loadContent(){
-              if (this.content && this.content !== '' && this.loadContent) {
-                if (this.output != 'delta') {
-                    this.editor.clipboard.dangerouslyPasteHTML(this.content)
-                } else {
-                    this.editor.setContents(this.content)
-                }
-              }
-            }
-        }
     }
 </script>
