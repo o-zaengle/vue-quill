@@ -8,7 +8,7 @@
     import defaultsDeep from 'lodash.defaultsdeep'
     import Quill from 'quill'
     import GrammarlyInline from './formats/GrammarlyInline'
-    import { ImageUpload } from 'quill-image-upload'
+    import {ImageUpload} from 'quill-image-upload'
 
     export default {
         model: {
@@ -24,6 +24,11 @@
                     return []
                 },
             },
+            validateLinks: {
+                type: Boolean,
+                required: false,
+                default: false
+            },
 
             keyBindings: {
                 type: Array,
@@ -33,7 +38,7 @@
             },
 
             output: {
-                default : 'html'
+                default: 'html'
             },
 
             config: {
@@ -52,9 +57,9 @@
                         toolbar: [
                             ['bold', 'italic', 'underline'],
                             [
-                               { 'list': 'ordered' }, { 'list': 'bullet' }
+                                {'list': 'ordered'}, {'list': 'bullet'}
                             ],
-                            [{ 'align': [] }],
+                            [{'align': []}],
                             ['image'],
                         ],
                     },
@@ -65,7 +70,7 @@
 
         watch: {
             loadContent() {
-                if(this.loadContent) {
+                if (this.loadContent) {
                     this.setContent()
                 }
             }
@@ -94,6 +99,32 @@
 
             this.editor = new Quill(this.$refs.quill, defaultsDeep(this.config, this.defaultConfig))
 
+            if (this.validateLinks) {
+                let vm = this;
+                let tooltipSave = this.editor.theme.tooltip.save;
+
+                this.editor.theme.tooltip.save = function(){
+                    var url = this.textbox.value;
+                    if (url.indexOf('http') === -1) {
+                        url = 'http://' + url;
+                    }
+
+                    $(this.textbox).addClass('ql-error');
+
+                    url = url.toLowerCase();
+
+                    if (vm.validateUrl(url)) {
+                        this.textbox.value = url;
+                        tooltipSave.call(this);
+                    }
+                    else {
+                        // show error in tooltip
+                        $(this.textbox).addClass('error');
+                    }
+
+                }
+            }
+
             this.editor.on('text-change', (delta, source) => {
                 this.$emit('text-change', this.editor, delta, source)
                 this.$emit('input', this.output != 'delta' ? this.editor.root.innerHTML : this.editor.getContents())
@@ -106,7 +137,7 @@
 
         methods: {
             setContent() {
-                if(this.content.length) {
+                if (this.content.length) {
                     if (this.output === 'delta') {
                         this.editor.setContents(this.content)
                     } else {
@@ -117,8 +148,12 @@
             focusEditor(e) {
                 if (!this.editor.hasFocus()) {
                     this.editor.focus()
-                    this.editor.setSelection(this.editor.getLength()-1, this.editor.getLength())
+                    this.editor.setSelection(this.editor.getLength() - 1, this.editor.getLength())
                 }
+            },
+            validateUrl(url)
+            {
+                return /^(https?:\/\/)?((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|((\d{1,3}\.){3}\d{1,3}))(\:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(\#[-a-z\d_]*)?$/.test(url);
             }
         },
     }
